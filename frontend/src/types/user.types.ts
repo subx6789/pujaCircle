@@ -2,6 +2,13 @@ import { Role } from './auth.types';
 
 export type UserStatus = 'ACTIVE' | 'SUSPENDED';
 
+export interface UserPreferences {
+  smsReminders?: boolean;
+  whatsappAlerts?: boolean;
+  panchangUpdates?: boolean;
+  emailReceipts?: boolean;
+}
+
 export interface UserProfile {
   id: string;
   name: string;
@@ -13,6 +20,7 @@ export interface UserProfile {
   addressSummary?: string;
   bookingCount?: number;
   createdAt?: string;
+  preferences?: UserPreferences;
 }
 
 export interface UpdateUserProfileRequest {
@@ -20,4 +28,11 @@ export interface UpdateUserProfileRequest {
   email?: string;
   phoneNumber?: string;
   status?: UserStatus;
+  primaryCity?: string;
+  preferences?: UserPreferences;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
 }
