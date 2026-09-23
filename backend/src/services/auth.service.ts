@@ -6,7 +6,6 @@ import { priestProfiles } from '../models/priest.model.js';
 import { addresses } from '../models/address.model.js';
 import { toUserView, UserViewModel } from '../views/user.view.js';
 import { brevoEmailService } from './email.service.js';
-import { smsService } from './sms.service.js';
 import {
   LoginInput,
   RegisterUserInput,
@@ -336,16 +335,13 @@ export class AuthService {
   }
 
   /**
-   * Dispatch Phone OTP via MSG91 Gateway & Dynamic OTP Engine
+   * Dispatch Phone OTP via Dynamic OTP Engine
    */
   async sendPhoneOtp(phoneNumber: string): Promise<{ message: string }> {
     const cleanPhone = phoneNumber.trim();
     const formattedPhone = cleanPhone.startsWith('+') ? cleanPhone : `+91${cleanPhone}`;
-    const code = generateDynamicOtp(cleanPhone);
+    generateDynamicOtp(cleanPhone);
     generateDynamicOtp(formattedPhone);
-
-    // Send SMS OTP via MSG91 Gateway (for Devotee & Purohit)
-    await smsService.sendOtpSms(cleanPhone, code);
 
     return {
       message: `Verification code dispatched successfully to ${formattedPhone}.`,

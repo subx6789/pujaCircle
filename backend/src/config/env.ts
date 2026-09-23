@@ -34,12 +34,6 @@ const envSchema = z.object({
   BREVO_API_KEY: z.string().optional(),
   BREVO_SENDER_EMAIL: z.string().default('noreply@pujacircle.com'),
   BREVO_SENDER_NAME: z.string().default('PujaCircle Sanctum'),
-
-  // SMS (Optional fallback)
-  MSG91_AUTH_KEY: z.string().optional(),
-  MSG91_TEMPLATE_ID: z.string().optional(),
-  MSG91_CAMPAIGN_SLUG: z.string().optional(),
-  MSG91_SENDER_ID: z.string().default('smsind'),
 });
 
 const parsed = envSchema.safeParse(process.env);
