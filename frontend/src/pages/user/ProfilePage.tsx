@@ -29,6 +29,8 @@ import {
   BookOpen,
   Camera,
   Trash2,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -61,6 +63,9 @@ export const ProfilePage: React.FC = () => {
   const [currentPassword, setCurrentPassword] = useState<string>("");
   const [newPassword, setNewPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState<boolean>(false);
+  const [showNewPassword, setShowNewPassword] = useState<boolean>(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState<boolean>(false);
 
   useEffect(() => {
@@ -561,14 +566,25 @@ export const ProfilePage: React.FC = () => {
                     <div className="relative">
                       <Input
                         id="currentPassword"
-                        type="password"
+                        type={showCurrentPassword ? "text" : "password"}
                         placeholder="••••••••"
                         value={currentPassword}
                         onChange={(e) => setCurrentPassword(e.target.value)}
-                        className="pr-10 h-10 rounded-md border-stone-300 focus:ring-amber-500 bg-white text-xs"
+                        className="pl-3.5 pr-10 h-10 rounded-md border-stone-300 focus:ring-amber-500 bg-white text-xs"
                         required
                       />
-                      <Lock className="w-4 h-4 absolute right-3 top-3 text-stone-400" />
+                      <button
+                        type="button"
+                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        className="absolute right-3.5 top-3 text-stone-400 hover:text-stone-700 cursor-pointer"
+                        aria-label={showCurrentPassword ? "Hide current password" : "Show current password"}
+                      >
+                        {showCurrentPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                      </button>
                     </div>
                   </div>
 
@@ -582,14 +598,25 @@ export const ProfilePage: React.FC = () => {
                     <div className="relative">
                       <Input
                         id="newPassword"
-                        type="password"
+                        type={showNewPassword ? "text" : "password"}
                         placeholder="••••••••"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        className="pr-10 h-10 rounded-md border-stone-300 focus:ring-amber-500 bg-white text-xs"
+                        className="pl-3.5 pr-10 h-10 rounded-md border-stone-300 focus:ring-amber-500 bg-white text-xs"
                         required
                       />
-                      <KeyRound className="w-4 h-4 absolute right-3 top-3 text-stone-400" />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute right-3.5 top-3 text-stone-400 hover:text-stone-700 cursor-pointer"
+                        aria-label={showNewPassword ? "Hide new password" : "Show new password"}
+                      >
+                        {showNewPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                      </button>
                     </div>
                     <p className="text-[11px] text-stone-500">
                       Must be at least 8 characters long with uppercase,
@@ -607,14 +634,25 @@ export const ProfilePage: React.FC = () => {
                     <div className="relative">
                       <Input
                         id="confirmPassword"
-                        type="password"
+                        type={showConfirmPassword ? "text" : "password"}
                         placeholder="••••••••"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="pr-10 h-10 rounded-md border-stone-300 focus:ring-amber-500 bg-white text-xs"
+                        className="pl-3.5 pr-10 h-10 rounded-md border-stone-300 focus:ring-amber-500 bg-white text-xs"
                         required
                       />
-                      <Lock className="w-4 h-4 absolute right-3 top-3 text-stone-400" />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3.5 top-3 text-stone-400 hover:text-stone-700 cursor-pointer"
+                        aria-label={showConfirmPassword ? "Hide confirmation password" : "Show confirmation password"}
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                      </button>
                     </div>
                   </div>
                 </div>

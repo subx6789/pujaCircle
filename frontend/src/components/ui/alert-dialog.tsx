@@ -34,7 +34,7 @@ const AlertDialogContent = React.forwardRef<
     <BaseAlertDialog.Popup
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-2rem)] max-w-lg max-h-[92vh] overflow-y-auto translate-x-[-50%] translate-y-[-50%] gap-4 rounded-xl border bg-background p-4 sm:p-6 shadow-2xl duration-200 data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 data-closed:slide-out-to-left-1/2 data-closed:slide-out-to-top-[48%] data-open:slide-in-from-left-1/2 data-open:slide-in-from-top-[48%]",
+        "fixed left-1/2 top-1/2 z-50 flex flex-col w-[calc(100%-1.5rem)] sm:w-[calc(100%-2rem)] max-w-lg max-h-[90vh] sm:max-h-[92vh] overflow-y-auto overflow-x-hidden min-w-0 box-border -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl border bg-background p-3.5 sm:p-6 shadow-2xl duration-200 data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 data-closed:slide-out-to-left-1/2 data-closed:slide-out-to-top-[48%] data-open:slide-in-from-left-1/2 data-open:slide-in-from-top-[48%]",
         className
       )}
       {...props}

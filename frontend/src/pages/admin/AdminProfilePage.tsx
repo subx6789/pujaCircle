@@ -64,6 +64,7 @@ export const AdminProfilePage: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   // Read-only account metadata
@@ -191,12 +192,20 @@ export const AdminProfilePage: React.FC = () => {
 
     setIsUpdatingPassword(true);
     try {
-      await new Promise((r) => setTimeout(r, 600));
+      const res = await adminApi.updateAdminPassword({
+        currentPassword: parseResult.data.currentPassword,
+        newPassword: parseResult.data.newPassword,
+        confirmPassword: parseResult.data.confirmPassword,
+      });
 
-      toast.success("Administrator password updated successfully!");
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
+      if (res.success) {
+        toast.success("Administrator password updated successfully!");
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+      } else {
+        toast.error(res.message || "Failed to update administrator password.");
+      }
     } catch {
       toast.error("Failed to update password.");
     } finally {
@@ -221,7 +230,7 @@ export const AdminProfilePage: React.FC = () => {
             ॐ
           </div>
           <div className="min-w-0 flex-1">
-            <h1 className="text-xl sm:text-3xl font-extrabold font-serif text-stone-950 break-words">
+            <h1 className="text-xl sm:text-3xl font-extrabold font-serif text-stone-950 wrap-break-word">
               Admin Profile & Platform Credentials
             </h1>
             <p className="text-xs text-stone-600 mt-1 leading-relaxed">
@@ -282,7 +291,7 @@ export const AdminProfilePage: React.FC = () => {
 
           <div className="space-y-1.5 flex-1 min-w-0 w-full">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-              <h2 className="text-lg sm:text-xl font-bold font-serif text-stone-950 break-words">
+              <h2 className="text-lg sm:text-xl font-bold font-serif text-stone-950 wrap-break-word">
                 {fullName}
               </h2>
               <Badge className="bg-[#450A0A] text-amber-300 border border-amber-400/40 text-[10px] font-bold tracking-wider uppercase shrink-0">
@@ -484,12 +493,23 @@ export const AdminProfilePage: React.FC = () => {
                 <Lock className="absolute left-3.5 top-3 h-4 w-4 text-stone-400" />
                 <Input
                   id="confirm-pass"
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="pl-10 text-xs h-10 rounded-md border-stone-300 focus:ring-amber-500 bg-white"
+                  className="pl-10 pr-10 text-xs h-10 rounded-md border-stone-300 focus:ring-amber-500 bg-white"
                   placeholder="Re-enter new password"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3.5 top-3 text-stone-400 hover:text-stone-700 cursor-pointer"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
               </div>
             </div>
 

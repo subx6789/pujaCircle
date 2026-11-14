@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { BookingStatusBadge } from '@/components/booking/BookingStatusBadge';
 import { Booking } from '@/types/booking.types';
 import { formatINR, formatDate } from '@/lib/utils';
-import { Calendar, Clock, MapPin, Phone, User, Sparkles, Ban, AlertCircle, FileText } from 'lucide-react';
+import { Calendar, Clock, MapPin, Phone, User, Sparkles, Ban, AlertCircle, FileText, CheckCircle2, Star } from 'lucide-react';
 
 interface PriestBookingDetailsDialogProps {
   isOpen: boolean;
@@ -29,7 +29,7 @@ export const PriestBookingDetailsDialog: React.FC<PriestBookingDetailsDialogProp
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-lg bg-white border-2 border-amber-300">
-        <DialogHeader className="space-y-1.5 text-left pr-8 sm:pr-10">
+        <DialogHeader className="space-y-1.5 text-left pr-10 sm:pr-12">
           <div className="flex items-start gap-2.5">
             <div className="h-9 w-9 rounded-md bg-amber-100 border border-amber-300 text-primary flex items-center justify-center shrink-0 mt-0.5">
               <Sparkles className="w-4 h-4 text-[#780016]" />
@@ -122,6 +122,31 @@ export const PriestBookingDetailsDialog: React.FC<PriestBookingDetailsDialogProp
               <p className="pl-5 text-stone-800 text-xs font-medium leading-relaxed">
                 "{booking.specialInstructions || booking.notes || booking.userNotes}"
               </p>
+            </div>
+          )}
+
+          {/* Completed Ceremony Status */}
+          {booking.status === 'COMPLETED' && (
+            <div className="p-3.5 rounded-lg bg-emerald-50 border border-emerald-300 text-xs space-y-1.5 text-emerald-950">
+              <strong className="font-bold flex items-center gap-1.5 text-emerald-800">
+                <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
+                Ceremony Successfully Conducted & Dakshina Received
+              </strong>
+              {booking.completedAt && (
+                <p className="text-[11px] text-emerald-800 pl-5">
+                  Completed on: <strong>{formatDate(booking.completedAt)}</strong>
+                </p>
+              )}
+              {booking.rating && (
+                <div className="pl-5 pt-1 flex flex-wrap items-center gap-2 text-stone-800">
+                  <span className="font-bold">Devotee Rating:</span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-100 border border-amber-300 text-amber-900 font-bold text-xs">
+                    <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                    {booking.rating} / 5
+                  </span>
+                  {booking.review && <span className="italic text-stone-700 break-words">"{booking.review}"</span>}
+                </div>
+              )}
             </div>
           )}
 

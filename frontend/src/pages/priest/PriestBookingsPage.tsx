@@ -9,8 +9,7 @@ import { CancelBookingDialog } from "@/components/booking/CancelBookingDialog";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BOOKING_STATUS_CONFIG } from "@/lib/constants";
-import { Search, Calendar, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Search, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -155,15 +154,6 @@ export const PriestBookingsPage: React.FC = () => {
             </p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={fetchBookings}
-          className="gap-1.5 text-xs w-fit h-10 px-4 rounded-md border-stone-300 hover:border-amber-400 font-bold"
-        >
-          <RefreshCw className="w-3.5 h-3.5 text-amber-600" />
-          Refresh
-        </Button>
       </div>
 
       {/* Filter Tabs & Search Bar */}

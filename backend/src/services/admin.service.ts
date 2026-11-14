@@ -6,6 +6,7 @@ import { AppError } from '@/utils/AppError.js';
 import { getPagination } from '@/utils/pagination.js';
 import { cloudinaryService } from '@/services/cloudinary.service.js';
 import { cloudinary } from '@/config/cloudinary.js';
+import { brevoEmailService } from '@/services/email.service.js';
 
 export interface DashboardStats {
   totalUsers: number;
@@ -187,11 +188,15 @@ export class AdminService {
   }
 
   /**
-   * Ban priest account by priestProfile id
+   * Ban priest account by priestProfile id.
+   * Automatically cancels all active/pending bookings and dispatches a notification email to the priest.
    */
   async banPriest(priestId: string, reason?: string): Promise<void> {
     const [priest] = await db
-      .select({ userId: priestProfiles.userId })
+      .select({
+        id: priestProfiles.id,
+        userId: priestProfiles.userId,
+      })
       .from(priestProfiles)
       .where(eq(priestProfiles.id, priestId))
       .limit(1);
@@ -200,13 +205,103 @@ export class AdminService {
       throw new AppError(404, 'Priest record not found.');
     }
 
+    const [priestUser] = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+      })
+      .from(users)
+      .where(eq(users.id, priest.userId))
+      .limit(1);
+
+    const banReason = reason?.trim() || 'Suspended by platform administrator';
+
+    // 1. Cancel all active/pending ceremony bookings associated with this priest
+    const activeBookings = await db
+      .select({
+        id: bookings.id,
+        bookingReference: bookings.bookingReference,
+        serviceName: bookings.serviceName,
+        bookingDate: bookings.bookingDate,
+        startTime: bookings.startTime,
+        endTime: bookings.endTime,
+        userId: bookings.userId,
+        userName: users.name,
+        userEmail: users.email,
+      })
+      .from(bookings)
+      .leftJoin(users, eq(bookings.userId, users.id))
+      .where(
+        and(
+          eq(bookings.priestId, priest.id),
+          inArray(bookings.status, ['PENDING', 'CONFIRMED'])
+        )
+      );
+
+    if (activeBookings.length > 0) {
+      await db
+        .update(bookings)
+        .set({
+          status: 'CANCELLED',
+          cancelledBy: 'ADMIN',
+          cancelledAt: new Date(),
+          cancellationReason: `Cancelled by platform administrator due to Purohit account ban: ${banReason}`,
+        })
+        .where(
+          and(
+            eq(bookings.priestId, priest.id),
+            inArray(bookings.status, ['PENDING', 'CONFIRMED'])
+          )
+        );
+
+      // Notify all affected devotees that their ceremony has been cancelled
+      for (const b of activeBookings) {
+        if (b.userEmail) {
+          await brevoEmailService
+            .sendBookingCancelledDueToPriestStatusEmail({
+              userEmail: b.userEmail,
+              userName: b.userName || 'Devotee',
+              bookingReference: b.bookingReference || b.id,
+              serviceName: b.serviceName || 'Puja Ceremony',
+              bookingDate: b.bookingDate ? String(b.bookingDate) : 'Scheduled Date',
+              slotTime: b.startTime && b.endTime ? `${b.startTime} - ${b.endTime}` : 'Scheduled Muhurat',
+              priestName: priestUser?.name || 'Assigned Purohit',
+              action: 'BANNED',
+              reason: banReason,
+            })
+            .catch((err) => {
+              console.warn(`[AdminService] Failed to notify devotee ${b.userEmail} of priest ban:`, err);
+            });
+        }
+      }
+    }
+
+    // 2. Update priest's user record to BANNED status
     await db
       .update(users)
       .set({
         accountStatus: 'BANNED',
-        banReason: reason || 'Suspended by administrator',
+        banReason,
+        updatedAt: new Date(),
       })
       .where(eq(users.id, priest.userId));
+
+    // 3. Dispatch notification email to the priest with ban details and cancellation notice
+    if (priestUser?.email) {
+      await brevoEmailService
+        .sendAccountStatusEmail(
+          priestUser.email,
+          priestUser.name || 'Purohit',
+          'BANNED',
+          banReason,
+          activeBookings.length,
+          'PRIEST'
+        )
+        .catch((err) => {
+          console.warn('[AdminService] Failed to dispatch priest ban email notification:', err);
+        });
+    }
   }
 
   /**
@@ -329,16 +424,80 @@ export class AdminService {
   }
 
   /**
-   * Suspend a devotee user specifically
+   * Suspend a devotee user specifically.
+   * Automatically cancels all active/pending bookings on the priest side and emails the user.
    */
   async suspendUser(userId: string, reason?: string): Promise<void> {
+    const [user] = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!user) {
+      throw new AppError(404, 'User record not found.');
+    }
+
+    const suspendReason = reason?.trim() || 'Suspended by platform administrator';
+
+    // 1. Cancel all active bookings (PENDING, CONFIRMED) for this devotee
+    const activeBookings = await db
+      .select({ id: bookings.id })
+      .from(bookings)
+      .where(
+        and(
+          eq(bookings.userId, userId),
+          inArray(bookings.status, ['PENDING', 'CONFIRMED'])
+        )
+      );
+
+    if (activeBookings.length > 0) {
+      await db
+        .update(bookings)
+        .set({
+          status: 'CANCELLED',
+          cancelledBy: 'ADMIN',
+          cancelledAt: new Date(),
+          cancellationReason: `Cancelled by platform administrator due to devotee account suspension: ${suspendReason}`,
+        })
+        .where(
+          and(
+            eq(bookings.userId, userId),
+            inArray(bookings.status, ['PENDING', 'CONFIRMED'])
+          )
+        );
+    }
+
+    // 2. Set devotee user account status to BANNED
     await db
       .update(users)
       .set({
         accountStatus: 'BANNED',
-        banReason: reason || 'Suspended by administrator',
+        banReason: suspendReason,
+        updatedAt: new Date(),
       })
       .where(eq(users.id, userId));
+
+    // 3. Dispatch notification email to devotee
+    if (user.email) {
+      await brevoEmailService
+        .sendAccountStatusEmail(
+          user.email,
+          user.name || 'Devotee',
+          'SUSPENDED',
+          suspendReason,
+          activeBookings.length,
+          'DEVOTEE'
+        )
+        .catch((err) => {
+          console.warn('[AdminService] Failed to dispatch user suspension email notification:', err);
+        });
+    }
   }
 
   /**
@@ -356,16 +515,22 @@ export class AdminService {
 
   /**
    * Delete a devotee user account permanently.
-   * Associated bookings have their user_id disassociated to null,
-   * preserving booking financial and schedule audit history.
+   * Cancels active bookings first, sends notification email to user,
+   * then disassociates booking history and cascades address removal.
    */
-  async deleteUser(userId: string, currentAdminId?: string): Promise<void> {
+  async deleteUser(userId: string, reason?: string, currentAdminId?: string): Promise<void> {
     if (currentAdminId && userId === currentAdminId) {
       throw new AppError(400, 'Security violation: Cannot delete the currently logged-in administrator account.');
     }
 
     const [user] = await db
-      .select({ id: users.id, role: users.role, avatarUrl: users.avatarUrl })
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+        avatarUrl: users.avatarUrl,
+      })
       .from(users)
       .where(eq(users.id, userId))
       .limit(1);
@@ -375,11 +540,57 @@ export class AdminService {
     }
 
     if (user.role === 'PRIEST') {
-      return this.deletePriest(userId, currentAdminId);
+      return this.deletePriest(userId, reason, currentAdminId);
     }
 
     if (user.role !== 'USER') {
       throw new AppError(400, 'Only devotee accounts can be deleted through this endpoint.');
+    }
+
+    const deleteReason = reason?.trim() || 'Account permanently deleted by platform administrator.';
+
+    // 1. Cancel all active bookings (PENDING, CONFIRMED) before account removal
+    const activeBookings = await db
+      .select({ id: bookings.id })
+      .from(bookings)
+      .where(
+        and(
+          eq(bookings.userId, userId),
+          inArray(bookings.status, ['PENDING', 'CONFIRMED'])
+        )
+      );
+
+    if (activeBookings.length > 0) {
+      await db
+        .update(bookings)
+        .set({
+          status: 'CANCELLED',
+          cancelledBy: 'ADMIN',
+          cancelledAt: new Date(),
+          cancellationReason: `Cancelled by platform administrator due to devotee account deletion: ${deleteReason}`,
+        })
+        .where(
+          and(
+            eq(bookings.userId, userId),
+            inArray(bookings.status, ['PENDING', 'CONFIRMED'])
+          )
+        );
+    }
+
+    // 2. Dispatch notification email to devotee informing them of deletion and booking cancellations
+    if (user.email) {
+      await brevoEmailService
+        .sendAccountStatusEmail(
+          user.email,
+          user.name || 'Devotee',
+          'DELETED',
+          deleteReason,
+          activeBookings.length,
+          'DEVOTEE'
+        )
+        .catch((err) => {
+          console.warn('[AdminService] Failed to dispatch user deletion email notification:', err);
+        });
     }
 
     // Find all address IDs belonging to this user
@@ -416,9 +627,10 @@ export class AdminService {
   /**
    * Delete a priest profile and associated user account.
    * Accepts priestProfiles.id or linked userId.
-   * Associated bookings have their priest_id disassociated to null, preserving booking history.
+   * Cancels active bookings first, sends notification email to priest,
+   * then disassociates bookings to preserve financial audit history.
    */
-  async deletePriest(priestId: string, currentAdminId?: string): Promise<void> {
+  async deletePriest(priestId: string, reason?: string, currentAdminId?: string): Promise<void> {
     const [priest] = await db
       .select({
         id: priestProfiles.id,
@@ -438,12 +650,95 @@ export class AdminService {
     }
 
     const [priestUser] = await db
-      .select({ avatarUrl: users.avatarUrl })
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        avatarUrl: users.avatarUrl,
+      })
       .from(users)
       .where(eq(users.id, priest.userId))
       .limit(1);
 
-    // Disassociate bookings from this priest to preserve booking history
+    const deleteReason = reason?.trim() || 'Account permanently deleted by platform administrator.';
+
+    // 1. Cancel all active bookings (PENDING, CONFIRMED) before deletion
+    const activeBookings = await db
+      .select({
+        id: bookings.id,
+        bookingReference: bookings.bookingReference,
+        serviceName: bookings.serviceName,
+        bookingDate: bookings.bookingDate,
+        startTime: bookings.startTime,
+        endTime: bookings.endTime,
+        userId: bookings.userId,
+        userName: users.name,
+        userEmail: users.email,
+      })
+      .from(bookings)
+      .leftJoin(users, eq(bookings.userId, users.id))
+      .where(
+        and(
+          eq(bookings.priestId, priest.id),
+          inArray(bookings.status, ['PENDING', 'CONFIRMED'])
+        )
+      );
+
+    if (activeBookings.length > 0) {
+      await db
+        .update(bookings)
+        .set({
+          status: 'CANCELLED',
+          cancelledBy: 'ADMIN',
+          cancelledAt: new Date(),
+          cancellationReason: `Cancelled by platform administrator due to Purohit account deletion: ${deleteReason}`,
+        })
+        .where(
+          and(
+            eq(bookings.priestId, priest.id),
+            inArray(bookings.status, ['PENDING', 'CONFIRMED'])
+          )
+        );
+
+      // Notify all affected devotees that their ceremony has been cancelled
+      for (const b of activeBookings) {
+        if (b.userEmail) {
+          await brevoEmailService
+            .sendBookingCancelledDueToPriestStatusEmail({
+              userEmail: b.userEmail,
+              userName: b.userName || 'Devotee',
+              bookingReference: b.bookingReference || b.id,
+              serviceName: b.serviceName || 'Puja Ceremony',
+              bookingDate: b.bookingDate ? String(b.bookingDate) : 'Scheduled Date',
+              slotTime: b.startTime && b.endTime ? `${b.startTime} - ${b.endTime}` : 'Scheduled Muhurat',
+              priestName: priestUser?.name || 'Assigned Purohit',
+              action: 'DELETED',
+              reason: deleteReason,
+            })
+            .catch((err) => {
+              console.warn(`[AdminService] Failed to notify devotee ${b.userEmail} of priest deletion:`, err);
+            });
+        }
+      }
+    }
+
+    // 2. Dispatch notification email to priest with deletion and cancellation details
+    if (priestUser?.email) {
+      await brevoEmailService
+        .sendAccountStatusEmail(
+          priestUser.email,
+          priestUser.name || 'Purohit',
+          'DELETED',
+          deleteReason,
+          activeBookings.length,
+          'PRIEST'
+        )
+        .catch((err) => {
+          console.warn('[AdminService] Failed to dispatch priest deletion email notification:', err);
+        });
+    }
+
+    // 3. Disassociate bookings from this priest to preserve booking audit history
     await db
       .update(bookings)
       .set({ priestId: null, priestServiceId: null })

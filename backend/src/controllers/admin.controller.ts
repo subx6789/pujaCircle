@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { sendSuccess, sendError } from '@/views/response.view.js';
 import { adminService } from '@/services/admin.service.js';
+import { userService } from '@/services/user.service.js';
 import { getPagination } from '@/utils/pagination.js';
 
 // Controller managing platform admin oversight, priest approvals, user moderation, and ceremony logs
@@ -141,7 +142,7 @@ export class AdminController {
   // DELETE /api/v1/admin/users/:id
   async deleteUser(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      await adminService.deleteUser(req.params.id, req.user?.id);
+      await adminService.deleteUser(req.params.id, req.body?.reason, req.user?.id);
       sendSuccess(res, 'User account ' + req.params.id + ' permanently deleted.');
     } catch (error) {
       next(error);
@@ -151,7 +152,7 @@ export class AdminController {
   // DELETE /api/v1/admin/priests/:id
   async deletePriest(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      await adminService.deletePriest(req.params.id, req.user?.id);
+      await adminService.deletePriest(req.params.id, req.body?.reason, req.user?.id);
       sendSuccess(res, 'Priest record ' + req.params.id + ' permanently deleted.');
     } catch (error) {
       next(error);
@@ -183,6 +184,16 @@ export class AdminController {
         avatarUrl: typeof avatarUrl === 'string' || avatarUrl === null ? avatarUrl : undefined,
       });
       sendSuccess(res, 'Admin profile updated successfully.', updated);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // POST /api/v1/admin/change-password
+  async changePassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      await userService.changePassword(req.user!.id, req.body);
+      sendSuccess(res, 'Administrator password changed successfully.');
     } catch (error) {
       next(error);
     }
