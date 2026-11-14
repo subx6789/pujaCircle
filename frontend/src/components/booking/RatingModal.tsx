@@ -76,7 +76,7 @@ export const RatingModal: React.FC<RatingModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader className="pr-8 sm:pr-10 text-center">
+        <DialogHeader className="pr-10 sm:pr-12 text-center">
           <DialogTitle className="font-serif text-lg sm:text-xl">
             Rate Vedic Ceremony
           </DialogTitle>
@@ -142,14 +142,14 @@ export const RatingModal: React.FC<RatingModalProps> = ({
             />
           </div>
 
-          <DialogFooter className="pt-2 flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
+          <DialogFooter className="pt-2 flex flex-row items-center gap-2 justify-end">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={onClose}
               disabled={isLoading || isSubmitting}
-              className="w-full sm:w-auto text-xs h-9 px-4 rounded-md border border-amber-300 text-stone-800 hover:bg-amber-50 cursor-pointer"
+              className="flex-1 sm:flex-initial sm:w-auto text-xs h-9 px-4 rounded-md border border-amber-300 text-stone-800 hover:bg-amber-50 cursor-pointer"
             >
               Cancel
             </Button>
@@ -157,9 +157,9 @@ export const RatingModal: React.FC<RatingModalProps> = ({
               type="submit"
               size="sm"
               disabled={isLoading || isSubmitting || !selectedRating || selectedRating < 1}
-              className="w-full sm:w-auto text-xs font-bold bg-[#780016] hover:bg-[#600012] text-white h-9 px-6 rounded-md shadow-xs border border-amber-400 cursor-pointer disabled:opacity-50"
+              className="flex-1 sm:flex-initial sm:w-auto text-xs font-bold bg-[#780016] hover:bg-[#600012] text-white h-9 px-6 rounded-md shadow-xs border border-amber-400 cursor-pointer disabled:opacity-50"
             >
-              {isLoading || isSubmitting ? "Submitting..." : "Submit Review & Rating"}
+              {isLoading || isSubmitting ? "Submitting..." : "Submit Review"}
             </Button>
           </DialogFooter>
         </form>

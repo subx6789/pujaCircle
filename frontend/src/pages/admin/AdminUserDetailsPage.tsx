@@ -150,9 +150,9 @@ export const AdminUserDetailsPage: React.FC = () => {
     }
   };
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = async (reason?: string) => {
     try {
-      const res = await adminApi.deleteUser(devotee.id);
+      const res = await adminApi.deleteUser(devotee.id, reason);
       if (res.success) {
         toast.success(`Devotee account for ${devotee.name} permanently deleted.`);
         setIsDeleteDialogOpen(false);
@@ -305,7 +305,7 @@ export const AdminUserDetailsPage: React.FC = () => {
             <MapPin className="w-4 h-4 text-amber-700" />
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="text-sm sm:text-base font-serif font-bold text-stone-950 leading-snug break-words">
+            <h3 className="text-sm sm:text-base font-serif font-bold text-stone-950 leading-snug wrap-break-word">
               Registered Sanctum Venues ({devotee.addresses?.length || 0})
             </h3>
             <p className="text-[11px] sm:text-xs text-stone-500 mt-0.5 leading-relaxed">
@@ -365,7 +365,7 @@ export const AdminUserDetailsPage: React.FC = () => {
             <Calendar className="w-4 h-4 text-amber-700" />
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="text-sm sm:text-base font-serif font-bold text-stone-950 leading-snug break-words">
+            <h3 className="text-sm sm:text-base font-serif font-bold text-stone-950 leading-snug wrap-break-word">
               Ceremony Booking History ({devotee.bookings?.length || 0})
             </h3>
             <p className="text-[11px] sm:text-xs text-stone-500 mt-0.5 leading-relaxed">
@@ -514,17 +514,28 @@ export const AdminUserDetailsPage: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-2 py-2">
-            <Label htmlFor="suspend-reason" className="text-xs font-bold text-stone-800">
-              Suspension Reason
-            </Label>
-            <Textarea
-              id="suspend-reason"
-              placeholder="e.g. Disciplinary breach / Unconfirmed bookings..."
-              value={reasonInput}
-              onChange={(e) => setReasonInput(e.target.value)}
-              className="text-xs min-h-24 rounded-md border-stone-300 focus:ring-amber-500 bg-white"
-            />
+          <div className="space-y-3 py-2">
+            <div className="p-3 bg-red-50 border border-red-200 rounded-md text-xs text-red-900 space-y-1">
+              <p className="font-bold flex items-center gap-1.5 text-red-800">
+                ⚠️ Automatic Cancellation & Notification:
+              </p>
+              <p className="text-[11px] leading-relaxed text-red-700">
+                Suspending this devotee will <strong>automatically cancel all of their active and pending bookings on the priest side</strong>, and a notification email stating the reason will be sent to the devotee.
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="suspend-reason" className="text-xs font-bold text-stone-800">
+                Suspension Reason
+              </Label>
+              <Textarea
+                id="suspend-reason"
+                placeholder="e.g. Disciplinary breach / Unconfirmed bookings..."
+                value={reasonInput}
+                onChange={(e) => setReasonInput(e.target.value)}
+                className="text-xs min-h-24 rounded-md border-stone-300 focus:ring-amber-500 bg-white"
+              />
+            </div>
           </div>
 
           <DialogFooter className="gap-2 flex flex-col-reverse sm:flex-row">
@@ -556,10 +567,14 @@ export const AdminUserDetailsPage: React.FC = () => {
               <Trash2 className="w-4 h-4" />
               Permanently Delete Devotee Account?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-xs text-stone-600">
-              Are you sure you want to permanently delete the profile of{" "}
-              <span className="font-bold text-stone-900">{devotee.name}</span>? All booking
-              records will be disassociated to preserve financial audit history.
+            <AlertDialogDescription className="text-xs text-stone-600 space-y-2">
+              <p>
+                Are you sure you want to permanently delete the profile of{" "}
+                <span className="font-bold text-stone-900">{devotee.name}</span>?
+              </p>
+              <span className="block p-2.5 rounded bg-red-50 border border-red-200 text-[11px] text-red-800 font-semibold">
+                ⚠️ All active and pending ceremony bookings will be automatically cancelled on the priest side, and a notification email will be sent to the devotee.
+              </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex flex-col-reverse sm:flex-row gap-2">
@@ -567,7 +582,7 @@ export const AdminUserDetailsPage: React.FC = () => {
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleConfirmDelete}
+              onClick={() => handleConfirmDelete()}
               className="bg-red-700 text-white hover:bg-red-800 text-xs rounded-md h-10 px-5 font-bold"
             >
               Delete Record

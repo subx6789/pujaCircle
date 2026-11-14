@@ -218,9 +218,9 @@ export const AdminPriestDetailsPage: React.FC = () => {
     }
   };
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = async (reason?: string) => {
     try {
-      const res = await adminApi.deletePriest(priest.id);
+      const res = await adminApi.deletePriest(priest.id, reason);
       if (res.success) {
         toast.success(`Priest ${priest.fullName} record deleted permanently.`);
         setIsDeleteDialogOpen(false);
@@ -830,20 +830,32 @@ export const AdminPriestDetailsPage: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-2 py-2">
-            <Label
-              htmlFor="ban-reason"
-              className="text-xs font-bold text-stone-800"
-            >
-              Reason for Ban
-            </Label>
-            <Textarea
-              id="ban-reason"
-              placeholder="e.g. Multiple unannounced ritual cancellations / Infraction of platform conduct..."
-              value={reasonInput}
-              onChange={(e) => setReasonInput(e.target.value)}
-              className="text-xs min-h-24 rounded-md border-stone-300 focus:ring-amber-500 bg-white"
-            />
+          <div className="space-y-3 py-2">
+            <div className="p-3 bg-red-50 border border-red-200 rounded-md text-xs text-red-900 space-y-1">
+              <p className="font-bold flex items-center gap-1.5 text-red-800">
+                <AlertTriangle className="w-3.5 h-3.5 text-red-700 shrink-0" />
+                Automatic Cancellation & Email Notification:
+              </p>
+              <p className="text-[11px] leading-relaxed text-red-700">
+                Banning this Purohit will <strong>automatically cancel all of their active and pending bookings</strong>, and an email notification explaining the ban reason will be sent to their registered email address.
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <Label
+                htmlFor="ban-reason"
+                className="text-xs font-bold text-stone-800"
+              >
+                Reason for Ban
+              </Label>
+              <Textarea
+                id="ban-reason"
+                placeholder="e.g. Multiple unannounced ritual cancellations / Infraction of platform conduct..."
+                value={reasonInput}
+                onChange={(e) => setReasonInput(e.target.value)}
+                className="text-xs min-h-24 rounded-md border-stone-300 focus:ring-amber-500 bg-white"
+              />
+            </div>
           </div>
 
           <DialogFooter className="gap-2 flex flex-col-reverse sm:flex-row">
@@ -878,12 +890,17 @@ export const AdminPriestDetailsPage: React.FC = () => {
               <Trash2 className="w-4 h-4" />
               Permanently Delete Priest Profile?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-xs text-stone-600">
-              Are you sure you want to permanently remove{" "}
-              <span className="font-bold text-stone-900">
-                {priest.fullName}
-              </span>{" "}
-              from the platform roster? This action cannot be undone.
+            <AlertDialogDescription className="text-xs text-stone-600 space-y-2">
+              <p>
+                Are you sure you want to permanently remove{" "}
+                <span className="font-bold text-stone-900">
+                  {priest.fullName}
+                </span>{" "}
+                from the platform roster?
+              </p>
+              <span className="block p-2.5 rounded bg-red-50 border border-red-200 text-[11px] text-red-800 font-semibold">
+                ⚠️ All active and pending ceremony bookings will be automatically cancelled, and notification emails will be sent to the priest and all booked devotees. This action cannot be undone.
+              </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex flex-col-reverse sm:flex-row gap-2">
@@ -891,7 +908,7 @@ export const AdminPriestDetailsPage: React.FC = () => {
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleConfirmDelete}
+              onClick={() => handleConfirmDelete()}
               className="bg-red-700 text-white hover:bg-red-800 text-xs rounded-md h-10 px-5 font-bold"
             >
               Delete Record

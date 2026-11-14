@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { DevoteeRecord } from '@/components/admin/UserManagementTable';
-import { Ban } from 'lucide-react';
+import { Ban, AlertTriangle } from 'lucide-react';
 
 interface SuspendUserDialogProps {
   isOpen: boolean;
@@ -43,17 +43,27 @@ export const SuspendUserDialog: React.FC<SuspendUserDialogProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader className="pr-8 sm:pr-10 text-left">
+        <DialogHeader className="pr-10 sm:pr-12 text-left">
           <DialogTitle className="text-base flex items-center gap-2 text-destructive">
             <Ban className="w-4 h-4 shrink-0" />
             <span>Suspend Devotee Account</span>
           </DialogTitle>
           <DialogDescription className="text-xs break-words leading-relaxed">
-            Suspension prevents <strong>{user?.name}</strong> from initiating new ceremony bookings.
+            Suspension revokes platform booking privileges for <strong>{user?.name}</strong>.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="py-2">
+        <div className="py-2 space-y-3">
+          <div className="p-3 bg-red-50 border border-red-200 rounded-md text-xs text-red-900 space-y-1">
+            <p className="font-bold flex items-center gap-1.5 text-red-800">
+              <AlertTriangle className="w-3.5 h-3.5 text-red-700 shrink-0" />
+              Automatic Cancellation & Notification:
+            </p>
+            <p className="text-[11px] leading-relaxed text-red-700">
+              Suspending this devotee will <strong>automatically cancel all of their active and pending bookings on the priest side</strong>, and a notification email stating the reason will be sent to the devotee.
+            </p>
+          </div>
+
           <Textarea
             placeholder="E.g., Repeated booking cancellations, payment disputes..."
             value={reason}
@@ -62,8 +72,8 @@ export const SuspendUserDialog: React.FC<SuspendUserDialogProps> = ({
           />
         </div>
 
-        <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2">
-          <Button variant="outline" size="sm" onClick={onClose} disabled={isSubmitting} className="w-full sm:w-auto">
+        <DialogFooter className="flex flex-row items-center justify-end gap-2">
+          <Button variant="outline" size="sm" onClick={onClose} disabled={isSubmitting} className="flex-1 sm:flex-initial sm:w-auto">
             Cancel
           </Button>
           <Button
@@ -71,7 +81,7 @@ export const SuspendUserDialog: React.FC<SuspendUserDialogProps> = ({
             size="sm"
             onClick={handleSubmit}
             disabled={!reason.trim() || isSubmitting}
-            className="w-full sm:w-auto"
+            className="flex-1 sm:flex-initial sm:w-auto"
           >
             {isSubmitting ? 'Suspending...' : 'Confirm Suspension'}
           </Button>

@@ -9,8 +9,7 @@ import { DeleteConfirmDialog } from "@/components/admin/PriestActionDialogs";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState } from "@/components/common/EmptyState";
-import { Button } from "@/components/ui/button";
-import { Search, Users, UserCheck, UserX, RefreshCw } from "lucide-react";
+import { Search, Users, UserCheck, UserX } from "lucide-react";
 import { toast } from "sonner";
 
 type DevoteeFilter = "ALL" | "ACTIVE" | "SUSPENDED";
@@ -78,10 +77,10 @@ export const AdminUsersPage: React.FC = () => {
     }
   };
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = async (reason?: string) => {
     if (!deleteTarget) return;
     try {
-      const res = await adminApi.deleteUser(deleteTarget.id);
+      const res = await adminApi.deleteUser(deleteTarget.id, reason);
       if (res.success) {
         toast.success(`User account for ${deleteTarget.name} deleted permanently.`);
         fetchUsers();
@@ -130,16 +129,6 @@ export const AdminUsersPage: React.FC = () => {
             </p>
           </div>
         </div>
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={fetchUsers}
-          className="h-10 px-4 gap-1.5 text-xs w-full sm:w-auto font-bold rounded-md border-stone-300 hover:border-amber-400 cursor-pointer"
-        >
-          <RefreshCw className="w-3.5 h-3.5 text-amber-600" />
-          Refresh
-        </Button>
       </div>
 
       {/* Metrics Row (100% Flexbox, Zero CSS Grids) */}
@@ -260,7 +249,7 @@ export const AdminUsersPage: React.FC = () => {
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDeleteConfirm}
         title="Delete Devotee Account"
-        description={`Are you sure you want to permanently delete the profile of ${deleteTarget?.name}? All booking history will be disassociated.`}
+        description={`Are you sure you want to permanently delete the profile of ${deleteTarget?.name}? All active and pending ceremony bookings will be automatically cancelled on the priest side, and a notification email will be sent to the devotee.`}
       />
     </div>
   );

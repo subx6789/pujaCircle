@@ -10,8 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState } from "@/components/common/EmptyState";
-import { Button } from "@/components/ui/button";
-import { Search, UserCheck, RefreshCw } from "lucide-react";
+import { Search, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 
 type StatusFilter = "ALL" | PriestApprovalStatus | "BANNED";
@@ -92,10 +91,10 @@ export const AdminPriestsPage: React.FC = () => {
     }
   };
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = async (reason?: string) => {
     if (!deleteTarget) return;
     try {
-      const res = await adminApi.deletePriest(deleteTarget.id);
+      const res = await adminApi.deletePriest(deleteTarget.id, reason);
       if (res.success) {
         toast.success(`Priest record for ${deleteTarget.fullName} permanently deleted.`);
         fetchPriests();
@@ -164,15 +163,6 @@ export const AdminPriestsPage: React.FC = () => {
             </p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={fetchPriests}
-          className="h-10 px-4 gap-1.5 text-xs w-full sm:w-auto font-bold rounded-md border-stone-300 hover:border-amber-400"
-        >
-          <RefreshCw className="w-3.5 h-3.5 text-amber-600" />
-          Refresh List
-        </Button>
       </div>
 
       {/* Filter Tabs & Search Bar */}
@@ -273,7 +263,7 @@ export const AdminPriestsPage: React.FC = () => {
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         title={`Delete Record for ${deleteTarget?.fullName}?`}
-        description="This will permanently delete the priest application from the directory. This action cannot be undone."
+        description={`This will permanently remove ${deleteTarget?.fullName} from the platform. All active and pending ceremony bookings will be automatically cancelled, and a notification email will be sent to the priest.`}
         onConfirm={handleDeleteConfirm}
       />
     </div>

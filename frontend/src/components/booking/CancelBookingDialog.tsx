@@ -60,7 +60,7 @@ export const CancelBookingDialog: React.FC<CancelBookingDialogProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader className="pr-8 sm:pr-10 text-left">
+        <DialogHeader className="pr-10 sm:pr-12 text-left">
           <div className="flex items-center gap-2 text-destructive font-semibold">
             <AlertCircle className="h-5 w-5 shrink-0" />
             <span className="truncate">{isPriest ? 'Decline Puja Request' : 'Cancel Ceremony Appointment'}</span>
@@ -101,8 +101,8 @@ export const CancelBookingDialog: React.FC<CancelBookingDialogProps> = ({
           />
         </div>
 
-        <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-2">
-          <Button variant="outline" size="sm" onClick={onClose} disabled={isSubmitting} className="w-full sm:w-auto">
+        <DialogFooter className="flex flex-row items-center justify-end gap-2">
+          <Button variant="outline" size="sm" onClick={onClose} disabled={isSubmitting} className="flex-1 sm:flex-initial sm:w-auto">
             Keep Booking
           </Button>
           <Button
@@ -110,10 +110,10 @@ export const CancelBookingDialog: React.FC<CancelBookingDialogProps> = ({
             size="sm"
             onClick={handleSubmit}
             disabled={!reason.trim() || isSubmitting}
-            className="w-full sm:w-auto gap-1.5"
+            className="flex-1 sm:flex-initial sm:w-auto gap-1.5"
           >
             <Ban className="w-3.5 h-3.5 shrink-0" />
-            {isSubmitting ? 'Processing...' : isPriest ? 'Decline Request' : 'Confirm Cancellation'}
+            {isSubmitting ? 'Processing...' : isPriest ? 'Decline' : 'Confirm'}
           </Button>
         </DialogFooter>
       </DialogContent>

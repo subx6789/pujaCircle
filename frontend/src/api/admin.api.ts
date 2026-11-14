@@ -98,12 +98,14 @@ export const adminApi = {
     }
   },
 
-  deletePriest: async (priestId: string): Promise<{ success: boolean; message: string }> => {
+  deletePriest: async (priestId: string, reason?: string): Promise<{ success: boolean; message: string }> => {
     try {
-      const res = await apiClient.delete(`/admin/priests/${priestId}`);
+      const res = await apiClient.delete(`/admin/priests/${priestId}`, {
+        data: reason ? { reason } : undefined,
+      });
       return res as any;
     } catch (error) {
-      logAppError('adminApi.deletePriest', error, { priestId });
+      logAppError('adminApi.deletePriest', error, { priestId, reason });
       return {
         success: false,
         message: getUserFriendlyErrorMessage(error, 'Failed to delete priest record.'),
@@ -158,12 +160,14 @@ export const adminApi = {
     }
   },
 
-  deleteUser: async (userId: string): Promise<{ success: boolean; message: string }> => {
+  deleteUser: async (userId: string, reason?: string): Promise<{ success: boolean; message: string }> => {
     try {
-      const res = await apiClient.delete(`/admin/users/${userId}`);
+      const res = await apiClient.delete(`/admin/users/${userId}`, {
+        data: reason ? { reason } : undefined,
+      });
       return res as any;
     } catch (error) {
-      logAppError('adminApi.deleteUser', error, { userId });
+      logAppError('adminApi.deleteUser', error, { userId, reason });
       return {
         success: false,
         message: getUserFriendlyErrorMessage(error, 'Failed to delete user account.'),
@@ -181,6 +185,19 @@ export const adminApi = {
       return {
         success: false,
         message: getUserFriendlyErrorMessage(error, 'Failed to update administrator profile.'),
+      };
+    }
+  },
+
+  updateAdminPassword: async (data: { currentPassword?: string; newPassword: string; confirmPassword: string }): Promise<{ success: boolean; message: string }> => {
+    try {
+      const res = await apiClient.post('/admin/change-password', data);
+      return res as any;
+    } catch (error) {
+      logAppError('adminApi.updateAdminPassword', error);
+      return {
+        success: false,
+        message: getUserFriendlyErrorMessage(error, 'Failed to update administrator password.'),
       };
     }
   },
